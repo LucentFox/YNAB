@@ -161,7 +161,7 @@ function updateChart() {
                 }]
             },
             options: {
-                rotation: -Math.PI,
+                rotation: -90,
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
