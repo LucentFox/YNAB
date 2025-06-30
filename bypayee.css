@@ -1,9 +1,17 @@
 body {
     font-family: Arial, sans-serif;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+h1 {
+    text-align: center;
     margin: 20px;
 }
 
 #payeeChart {
-    max-width: 600px;
-    max-height: 600px;
+    flex: 1;
+    width: 100%;
 }

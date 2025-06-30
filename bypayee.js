@@ -36,8 +36,9 @@ function loadChart() {
                 const sum = out + inflow;
                 totals[payee] = (totals[payee] || 0) + sum;
             }
-            const labels = Object.keys(totals);
-            const data = labels.map(l => totals[l]);
+            const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+            const labels = entries.map(e => e[0]);
+            const data = entries.map(e => e[1]);
             const colors = labels.map((_, i) => `hsl(${(i * 360 / labels.length) % 360},70%,60%)`);
             const ctx = document.getElementById('payeeChart').getContext('2d');
             const chart = new Chart(ctx, {
@@ -50,6 +51,8 @@ function loadChart() {
                     }]
                 },
                 options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'right' },
                         tooltip: {
