@@ -1,0 +1,1 @@
+A project to process ynab transactions into graphs
