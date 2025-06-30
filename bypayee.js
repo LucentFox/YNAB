@@ -130,6 +130,7 @@ function updateChart() {
                 }]
             },
             options: {
+                rotation: -Math.PI,
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
