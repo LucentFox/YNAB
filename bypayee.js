@@ -22,6 +22,7 @@ let payeeIndex;
 let outIndex;
 let inIndex;
 let categoryIndex;
+let groupIndex;
 
 function loadChart() {
     fetch('transactions.csv')
@@ -38,35 +39,56 @@ function loadChart() {
             if (categoryIndex === -1) {
                 categoryIndex = headers.indexOf('Category Group/Category');
             }
+            groupIndex = headers.indexOf('Category Group');
             createCategoryFilter();
             updateChart();
         });
 }
 
 function createCategoryFilter() {
-    const categories = new Set();
+    const groups = {};
     for (let i = 1; i < allRows.length; i++) {
         const row = allRows[i];
         if (row.length === 0) continue;
-        categories.add(row[categoryIndex]);
+        const group = groupIndex !== -1 ? row[groupIndex] : (row[categoryIndex].split(':')[0] || '');
+        const cat = row[categoryIndex];
+        if (!groups[group]) groups[group] = new Set();
+        groups[group].add(cat);
     }
     const container = document.getElementById('categoryFilter');
     container.innerHTML = '';
-    Array.from(categories).sort().forEach(cat => {
-        const label = document.createElement('label');
-        const box = document.createElement('input');
-        box.type = 'checkbox';
-        box.value = cat;
-        box.checked = true;
-        box.addEventListener('change', updateChart);
-        label.appendChild(box);
-        label.appendChild(document.createTextNode(cat));
-        container.appendChild(label);
+    Object.keys(groups).sort().forEach(g => {
+        const section = document.createElement('div');
+        section.className = 'group';
+        const title = document.createElement('div');
+        title.className = 'group-title';
+        title.textContent = g;
+        section.appendChild(title);
+        Array.from(groups[g]).sort().forEach(cat => {
+            const label = document.createElement('label');
+            const box = document.createElement('input');
+            box.type = 'checkbox';
+            box.value = cat;
+            box.checked = false;
+            box.addEventListener('change', updateChart);
+            label.appendChild(box);
+            label.appendChild(document.createTextNode(cat));
+            section.appendChild(label);
+        });
+        container.appendChild(section);
     });
 }
 
 function updateChart() {
     const selected = Array.from(document.querySelectorAll('#categoryFilter input:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+        if (chart) {
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.update();
+        }
+        return;
+    }
     const totals = {};
     for (let i = 1; i < allRows.length; i++) {
         const row = allRows[i];
