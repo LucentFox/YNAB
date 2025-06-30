@@ -23,6 +23,7 @@ let outIndex;
 let inIndex;
 let categoryIndex;
 let groupIndex;
+let dateIndex;
 
 function resizeCanvas() {
     const wrapper = document.getElementById('chartWrapper');
@@ -52,6 +53,31 @@ function loadChart() {
                 categoryIndex = headers.indexOf('Category Group/Category');
             }
             groupIndex = headers.indexOf('Category Group');
+            dateIndex = headers.indexOf('Date');
+
+            let minDate = null;
+            let maxDate = null;
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.length === 0) continue;
+                if (dateIndex !== -1) {
+                    const parts = row[dateIndex].split('/');
+                    if (parts.length === 3) {
+                        const d = new Date(parts[2], parts[0] - 1, parts[1]);
+                        if (!minDate || d < minDate) minDate = d;
+                        if (!maxDate || d > maxDate) maxDate = d;
+                    }
+                }
+            }
+
+            if (minDate && maxDate) {
+                const format = d => `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
+                const header = document.querySelector('h1');
+                if (header) {
+                    header.textContent = `YNAB Transactions by Payee (${format(minDate)} - ${format(maxDate)})`;
+                }
+            }
+
             createCategoryFilter();
             updateChart();
             resizeCanvas();
@@ -60,6 +86,7 @@ function loadChart() {
 
 function createCategoryFilter() {
     const groups = {};
+    const catTotals = {};
     for (let i = 1; i < allRows.length; i++) {
         const row = allRows[i];
         if (row.length === 0) continue;
@@ -67,6 +94,10 @@ function createCategoryFilter() {
         const cat = row[categoryIndex];
         if (!groups[group]) groups[group] = new Set();
         groups[group].add(cat);
+        const out = parseFloat(row[outIndex].replace(/[$,]/g, '')) || 0;
+        const inflow = parseFloat(row[inIndex].replace(/[$,]/g, '')) || 0;
+        const sum = out + inflow;
+        catTotals[cat] = (catTotals[cat] || 0) + sum;
     }
     const container = document.getElementById('categoryFilter');
     container.innerHTML = '';
@@ -85,7 +116,7 @@ function createCategoryFilter() {
             box.checked = false;
             box.addEventListener('change', updateChart);
             label.appendChild(box);
-            label.appendChild(document.createTextNode(cat));
+            label.appendChild(document.createTextNode(`${cat} [$${catTotals[cat].toFixed(2)}]`));
             section.appendChild(label);
         });
         container.appendChild(section);
