@@ -16,55 +16,103 @@ function parseCSV(str, delimiter = ',') {
     return data;
 }
 
+let chart;
+let allRows;
+let payeeIndex;
+let outIndex;
+let inIndex;
+let categoryIndex;
+
 function loadChart() {
     fetch('transactions.csv')
         .then(res => res.text())
         .then(text => {
             const rows = parseCSV(text);
             if (rows.length <= 1) return;
+            allRows = rows;
             const headers = rows[0];
-            const payeeIndex = headers.indexOf('Payee');
-            const outIndex = headers.indexOf('Outflow');
-            const inIndex = headers.indexOf('Inflow');
-            const totals = {};
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                if (row.length === 0) continue;
-                const payee = row[payeeIndex];
-                const out = parseFloat(row[outIndex].replace(/[$,]/g, '')) || 0;
-                const inflow = parseFloat(row[inIndex].replace(/[$,]/g, '')) || 0;
-                const sum = out + inflow;
-                totals[payee] = (totals[payee] || 0) + sum;
+            payeeIndex = headers.indexOf('Payee');
+            outIndex = headers.indexOf('Outflow');
+            inIndex = headers.indexOf('Inflow');
+            categoryIndex = headers.indexOf('Category');
+            if (categoryIndex === -1) {
+                categoryIndex = headers.indexOf('Category Group/Category');
             }
-            const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-            const labels = entries.map(e => e[0]);
-            const data = entries.map(e => e[1]);
-            const colors = labels.map((_, i) => `hsl(${(i * 360 / labels.length) % 360},70%,60%)`);
-            const ctx = document.getElementById('payeeChart').getContext('2d');
-            const chart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right' },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => `${ctx.label}: $${ctx.parsed.toFixed(2)}`
-                            }
+            createCategoryFilter();
+            updateChart();
+        });
+}
+
+function createCategoryFilter() {
+    const categories = new Set();
+    for (let i = 1; i < allRows.length; i++) {
+        const row = allRows[i];
+        if (row.length === 0) continue;
+        categories.add(row[categoryIndex]);
+    }
+    const container = document.getElementById('categoryFilter');
+    container.innerHTML = '';
+    Array.from(categories).sort().forEach(cat => {
+        const label = document.createElement('label');
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.value = cat;
+        box.checked = true;
+        box.addEventListener('change', updateChart);
+        label.appendChild(box);
+        label.appendChild(document.createTextNode(cat));
+        container.appendChild(label);
+    });
+}
+
+function updateChart() {
+    const selected = Array.from(document.querySelectorAll('#categoryFilter input:checked')).map(cb => cb.value);
+    const totals = {};
+    for (let i = 1; i < allRows.length; i++) {
+        const row = allRows[i];
+        if (row.length === 0) continue;
+        if (selected.length && !selected.includes(row[categoryIndex])) continue;
+        const payee = row[payeeIndex];
+        const out = parseFloat(row[outIndex].replace(/[$,]/g, '')) || 0;
+        const inflow = parseFloat(row[inIndex].replace(/[$,]/g, '')) || 0;
+        const sum = out + inflow;
+        totals[payee] = (totals[payee] || 0) + sum;
+    }
+    const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+    const labels = entries.map(e => e[0]);
+    const data = entries.map(e => e[1]);
+    const colors = labels.map((_, i) => `hsl(${(i * 360 / labels.length) % 360},70%,60%)`);
+    if (!chart) {
+        const ctx = document.getElementById('payeeChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.label}: $${ctx.parsed.toFixed(2)}`
                         }
                     }
-                },
-                plugins: [labelPlugin]
-            });
+                }
+            },
+            plugins: [labelPlugin]
         });
+    } else {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = data;
+        chart.data.datasets[0].backgroundColor = colors;
+        chart.update();
+    }
 }
 
 const labelPlugin = {
