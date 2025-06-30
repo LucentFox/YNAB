@@ -24,6 +24,18 @@ let inIndex;
 let categoryIndex;
 let groupIndex;
 
+function resizeCanvas() {
+    const wrapper = document.getElementById('chartWrapper');
+    const canvas = document.getElementById('payeeChart');
+    if (!wrapper || !canvas) return;
+    const size = Math.min(wrapper.clientWidth, wrapper.clientHeight);
+    canvas.width = size;
+    canvas.height = size;
+    if (chart) {
+        chart.resize();
+    }
+}
+
 function loadChart() {
     fetch('transactions.csv')
         .then(res => res.text())
@@ -42,6 +54,7 @@ function loadChart() {
             groupIndex = headers.indexOf('Category Group');
             createCategoryFilter();
             updateChart();
+            resizeCanvas();
         });
 }
 
@@ -80,6 +93,7 @@ function createCategoryFilter() {
 }
 
 function updateChart() {
+    resizeCanvas();
     const selected = Array.from(document.querySelectorAll('#categoryFilter input:checked')).map(cb => cb.value);
     if (selected.length === 0) {
         if (chart) {
@@ -157,3 +171,4 @@ const labelPlugin = {
 };
 
 document.addEventListener('DOMContentLoaded', loadChart);
+window.addEventListener('resize', resizeCanvas);
