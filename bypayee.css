@@ -1,0 +1,9 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+#payeeChart {
+    max-width: 600px;
+    max-height: 600px;
+}
