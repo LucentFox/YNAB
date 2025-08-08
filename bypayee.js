@@ -1,3 +1,4 @@
+'use strict';
 function parseCSV(str, delimiter = ',') {
     const pattern = new RegExp(
         ("(\\" + delimiter + "|\r?\n|\r|^)(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|([^\"\\" + delimiter + "\r\n]*))"),
