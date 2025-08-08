@@ -1,9 +1,11 @@
-A project to process ynab transactions into graphs.
+A project to process YNAB transactions into graphs.
 
-Transactions should be saved in the root of the project called transactions.csv with the following headers and data:
+Transactions should be saved in the root of the project as `transactions.csv` with the following headers and sample row:
 
-"Account","Flag","Date","Payee","Category Group/Category","Category Group","Category","Memo","Outflow","Inflow","Cleared"
-"Apple Card","","06/28/2025","Artic Spas","Utilities & Services: 💧 Spa Care","Utilities & Services","💧 Spa Care","",$438.38,$0.00,"Reconciled"
+```
+"Account","Flag","Date","Payee","Category Group/Category",...,"Outflow","Inflow","Cleared"
+"Apple Card","","06/28/2025","Artic Spas","Utilities & Services: 💧 Spa Care",...,"",$438.38,$0.00,"Reconciled"
+```
 
 ## Hosting the reports
 
